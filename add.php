@@ -1,4 +1,4 @@
- <?php
+<?php
 declare(strict_types=1);
 
 error_reporting(E_ALL);
@@ -19,9 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors = validateProductInput($values['name'], $values['price'], $values['sku'], $values['stock']);
 
     if (empty($errors)) {
-        addProduct($pdo, $values['name'], (float) $values['price'], $values['sku'], (int) $values['stock']);
-        header('Location: index.php?flash=added');
-        exit;
+        $errors = addProduct($pdo, $values['name'], (float) $values['price'], $values['sku'], (int) $values['stock']);
+
+        if (empty($errors)) {
+            header('Location: index.php?flash=added');
+            exit;
+        }
     }
 }
 ?>

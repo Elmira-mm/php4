@@ -38,9 +38,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors = validateProductInput($values['name'], $values['price'], $values['sku'], $values['stock']);
 
     if (empty($errors)) {
-        updateProduct($pdo, $id, $values['name'], (float) $values['price'], $values['sku'], (int) $values['stock']);
-        header('Location: index.php?flash=updated');
-        exit;
+        $errors = updateProduct($pdo, $id, $values['name'], (float) $values['price'], $values['sku'], (int) $values['stock']);
+
+        if (empty($errors)) {
+            header('Location: index.php?flash=updated');
+            exit;
+        }
     }
 }
 ?>

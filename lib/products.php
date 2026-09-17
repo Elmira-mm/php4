@@ -50,37 +50,62 @@ function totalStockValue(PDO $pdo): float
 
 /**
  * Крок 4. Додавання товару — addProduct().
+ * Повертає масив помилок (порожній при успіху). Дублікат SKU (унікальний
+ * ключ у таблиці) перехоплюється тут і перетворюється на зрозуміле
+ * повідомлення замість необробленого PDOException.
  */
-function addProduct(PDO $pdo, string $name, float $price, string $sku, int $stock): void
+function addProduct(PDO $pdo, string $name, float $price, string $sku, int $stock): array
 {
     $stmt = $pdo->prepare(
         'INSERT INTO products (name, price, sku, stock) VALUES (:name, :price, :sku, :stock)'
     );
-    $stmt->execute([
-        ':name'  => $name,
-        ':price' => $price,
-        ':sku'   => strtoupper($sku),
-        ':stock' => $stock,
-    ]);
+
+    try {
+        $stmt->execute([
+            ':name'  => $name,
+            ':price' => $price,
+            ':sku'   => strtoupper($sku),
+            ':stock' => $stock,
+        ]);
+    } catch (PDOException $e) {
+        if ($e->getCode() === '23000') {
+            return ['sku' => 'Товар з таким SKU вже існує. Оберіть інший артикул.'];
+        }
+
+        throw $e;
+    }
+
+    return [];
 }
 
 /**
  * Крок 5. Редагування товару — updateProduct($id, ...).
+ * Повертає масив помилок (порожній при успіху) — та сама обробка
+ * дубліката SKU, що й у addProduct().
  */
-function updateProduct(PDO $pdo, int $id, string $name, float $price, string $sku, int $stock): bool
+function updateProduct(PDO $pdo, int $id, string $name, float $price, string $sku, int $stock): array
 {
     $stmt = $pdo->prepare(
         'UPDATE products SET name = :name, price = :price, sku = :sku, stock = :stock WHERE id = :id'
     );
-    $stmt->execute([
-        ':name'  => $name,
-        ':price' => $price,
-        ':sku'   => strtoupper($sku),
-        ':stock' => $stock,
-        ':id'    => $id,
-    ]);
 
-    return $stmt->rowCount() > 0;
+    try {
+        $stmt->execute([
+            ':name'  => $name,
+            ':price' => $price,
+            ':sku'   => strtoupper($sku),
+            ':stock' => $stock,
+            ':id'    => $id,
+        ]);
+    } catch (PDOException $e) {
+        if ($e->getCode() === '23000') {
+            return ['sku' => 'Товар з таким SKU вже існує. Оберіть інший артикул.'];
+        }
+
+        throw $e;
+    }
+
+    return [];
 }
 
 /**
